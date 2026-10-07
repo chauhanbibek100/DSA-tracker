@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Progress Tracker</title>
+    <style>
+      :root {
+        --bg: #f4f5f7;
+        --card-bg: #ffffff;
+        --text: #1a1a1a;
+        --sub-text: #6b7280;
+        --border: #e5e7eb;
+        --accent: #4f46e5;
+        --accent-light: #eef2ff;
+        --good: #22c55e;
+        --good-bg: #dcfce7;
+        --today-ring: #4f46e5;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0f1115;
+          --card-bg: #1a1d24;
+          --text: #f0f0f2;
+          --sub-text: #9aa0ab;
+          --border: #2a2e37;
+          --accent: #818cf8;
+          --accent-light: #262a3a;
+          --good: #4ade80;
+          --good-bg: #14301f;
+          --today-ring: #818cf8;
+          --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0f1115;
+        --card-bg: #1a1d24;
+        --text: #f0f0f2;
+        --sub-text: #9aa0ab;
+        --border: #2a2e37;
+        --accent: #818cf8;
+        --accent-light: #262a3a;
+        --good: #4ade80;
+        --good-bg: #14301f;
+        --today-ring: #818cf8;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        /* padding: 8px 8px 10px; */
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      header h1 {
+        font-size: 1.6rem;
+        margin: 0 0 4px;
+      }
+      header p {
+        color: var(--sub-text);
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 8px;
+        text-align: center;
+        box-shadow: var(--shadow);
+      }
+      .stat-card .num {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .stat-card .label {
+        font-size: 0.75rem;
+        color: var(--sub-text);
+        margin-top: 2px;
+      }
+
+      .today-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+      }
+      .today-card .date-label {
+        font-size: 0.85rem;
+        color: var(--sub-text);
+        margin-bottom: 14px;
+      }
+      .tick-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .tick-box {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        background: var(--card-bg);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: transparent;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+      .tick-box:hover {
+        transform: translateY(-1px);
+        border-color: var(--good);
+      }
+      .tick-box.checked {
+        background: var(--good-bg);
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .tick-text {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .tick-text .sub {
+        display: block;
+        font-weight: 400;
+        font-size: 0.8rem;
+        color: var(--sub-text);
+        margin-top: 2px;
+      }
+
+      .note-input {
+        margin-top: 14px;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.9rem;
+        resize: none;
+        font-family: inherit;
+      }
+
+      .cal-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 10px;
+        box-shadow: var(--shadow);
+      }
+      .cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .cal-header button {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: var(--text);
+        padding: 4px 8px;
+        border-radius: 6px;
+      }
+      .cal-header button:hover {
+        background: var(--accent-light);
+      }
+      .cal-header .month-label {
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        color: var(--sub-text);
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+      }
+      .days-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+      .day-cell {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        cursor: pointer;
+        position: relative;
+        border: 1px solid transparent;
+        user-select: none;
+      }
+      .day-cell.empty {
+        cursor: default;
+      }
+      .day-cell.checked {
+        background: var(--good-bg);
+        color: var(--good);
+        font-weight: 700;
+      }
+      .day-cell.none {
+        background: var(--bg);
+        color: var(--sub-text);
+      }
+      .day-cell.today {
+        box-shadow: 0 0 0 2px var(--today-ring) inset;
+      }
+      .day-cell.future {
+        opacity: 0.35;
+        cursor: default;
+      }
+      .day-cell .tick-badge {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--good);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      }
+
+      .legend {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 14px;
+        font-size: 0.8rem;
+        color: var(--sub-text);
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot.checked {
+        background: var(--good);
+      }
+      .dot.none {
+        background: var(--sub-text);
+        opacity: 0.4;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--sub-text);
+        font-size: 0.75rem;
+      }
+      footer button {
+        background: none;
+        border: none;
+        color: var(--sub-text);
+        text-decoration: underline;
+        cursor: pointer;
+        font-size: 0.75rem;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Daily Progress fo DSA</h1>
+      </header>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="num" id="streakNum">0</div>
+          <div class="label">Current streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="monthNum">0</div>
+          <div class="label">Ticks this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="totalNum">0</div>
+          <div class="label">Total ticks</div>
+        </div>
+      </div>
+
+      <div class="today-card">
+        <div class="date-label" id="todayLabel">Today</div>
+        <div class="tick-row">
+          <div class="tick-box" id="tickBox">✓</div>
+          <div class="tick-text">
+            Mark today done
+            <span class="sub" id="tickSub">Not ticked yet</span>
+          </div>
+        </div>
+        <textarea
+          class="note-input"
+          id="noteInput"
+          rows="2"
+          placeholder="Optional note about today..."
+        ></textarea>
+      </div>
+
+      <div class="cal-card">
+        <div class="cal-header">
+          <button id="prevMonth">‹</button>
+          <div class="month-label" id="monthLabel"></div>
+          <button id="nextMonth">›</button>
+        </div>
+        <div class="weekdays">
+          <div>S</div>
+          <div>M</div>
+          <div>T</div>
+          <div>W</div>
+          <div>T</div>
+          <div>F</div>
+          <div>S</div>
+        </div>
+        <div class="days-grid" id="daysGrid"></div>
+        <div class="legend">
+          <span><span class="dot checked"></span>Ticked</span>
+          <span><span class="dot none"></span>No entry</span>
+        </div>
+      </div>
+
+      <footer>
+        Data is stored only in this browser.
+        <button id="resetBtn">Reset all data</button>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        const STORAGE_KEY = "daily-progress-tracker-data";
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        const todayKey = fmtKey(todayDate);
+
+        let data = {};
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          data = raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          data = {};
+        }
+
+        let viewYear = todayDate.getFullYear();
+        let viewMonth = todayDate.getMonth();
+
+        function fmtKey(d) {
+          return (
+            d.getFullYear() +
+            "-" +
+            String(d.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(d.getDate()).padStart(2, "0")
+          );
+        }
+
+        function save() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+
+        const todayLabel = document.getElementById("todayLabel");
+        const tickBox = document.getElementById("tickBox");
+        const tickSub = document.getElementById("tickSub");
+        const noteInput = document.getElementById("noteInput");
+        const monthLabel = document.getElementById("monthLabel");
+        const daysGrid = document.getElementById("daysGrid");
+        const streakNum = document.getElementById("streakNum");
+        const monthNum = document.getElementById("monthNum");
+        const totalNum = document.getElementById("totalNum");
+
+        function renderTodayCard() {
+          const dOpts = {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          };
+          todayLabel.textContent =
+            "Today — " + todayDate.toLocaleDateString(undefined, dOpts);
+          const entry = data[todayKey];
+          const checked = !!(entry && entry.checked);
+          tickBox.classList.toggle("checked", checked);
+          tickSub.textContent = checked ? "Done ✓" : "Not ticked yet";
+          noteInput.value = entry && entry.note ? entry.note : "";
+        }
+
+        function toggleToday() {
+          const existing = data[todayKey] || {};
+          const newChecked = !existing.checked;
+          if (!newChecked && !existing.note) {
+            delete data[todayKey];
+          } else {
+            data[todayKey] = { checked: newChecked, note: existing.note || "" };
+          }
+          save();
+          renderTodayCard();
+          renderCalendar();
+          renderStats();
+        }
+
+        tickBox.addEventListener("click", toggleToday);
+
+        let noteTimer = null;
+        noteInput.addEventListener("input", () => {
+          clearTimeout(noteTimer);
+          noteTimer = setTimeout(() => {
+            const existing = data[todayKey] || { checked: false };
+            existing.note = noteInput.value;
+            if (existing.checked || existing.note) {
+              data[todayKey] = existing;
+            } else {
+              delete data[todayKey];
+            }
+            save();
+          }, 300);
+        });
+
+        function renderCalendar() {
+          monthLabel.textContent = monthNames[viewMonth] + " " + viewYear;
+          daysGrid.innerHTML = "";
+
+          const firstDay = new Date(viewYear, viewMonth, 1);
+          const startOffset = firstDay.getDay();
+          const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+          for (let i = 0; i < startOffset; i++) {
+            const empty = document.createElement("div");
+            empty.className = "day-cell empty";
+            daysGrid.appendChild(empty);
+          }
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            const cellDate = new Date(viewYear, viewMonth, day);
+            cellDate.setHours(0, 0, 0, 0);
+            const key = fmtKey(cellDate);
+            const cell = document.createElement("div");
+            cell.textContent = day;
+
+            const isFuture = cellDate.getTime() > todayDate.getTime();
+            const isToday = cellDate.getTime() === todayDate.getTime();
+            const entry = data[key];
+            const checked = !!(entry && entry.checked);
+
+            let cls = "day-cell";
+            if (isFuture) {
+              cls += " future none";
+            } else if (checked) {
+              cls += " checked";
+            } else {
+              cls += " none";
+            }
+            if (isToday) cls += " today";
+            cell.className = cls;
+
+            if (checked) {
+              const badge = document.createElement("span");
+              badge.className = "tick-badge";
+              badge.textContent = "✓";
+              cell.appendChild(badge);
+            }
+
+            if (!isFuture) {
+              cell.title = entry && entry.note ? entry.note : "";
+              cell.addEventListener("click", () => {
+                const cur = data[key] || {};
+                const newChecked = !cur.checked;
+                if (!newChecked && !cur.note) {
+                  delete data[key];
+                } else {
+                  data[key] = { checked: newChecked, note: cur.note || "" };
+                }
+                save();
+                renderCalendar();
+                renderStats();
+                if (key === todayKey) renderTodayCard();
+              });
+            }
+
+            daysGrid.appendChild(cell);
+          }
+        }
+
+        function renderStats() {
+          // streak: consecutive ticked days counting back from today (skip today if not yet ticked)
+          let streak = 0;
+          let cursor = new Date(todayDate);
+          while (true) {
+            const key = fmtKey(cursor);
+            const e = data[key];
+            if (e && e.checked) {
+              streak++;
+              cursor.setDate(cursor.getDate() - 1);
+            } else if (key === todayKey) {
+              // today not ticked yet, don't break streak, just check yesterday
+              cursor.setDate(cursor.getDate() - 1);
+              continue;
+            } else {
+              break;
+            }
+          }
+          streakNum.textContent = streak;
+
+          const totalTicks = Object.values(data).filter(
+            (e) => e.checked,
+          ).length;
+          totalNum.textContent = totalTicks;
+
+          // ticks this viewed month
+          const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+          let count = 0;
+          for (let day = 1; day <= daysInMonth; day++) {
+            const d = new Date(viewYear, viewMonth, day);
+            d.setHours(0, 0, 0, 0);
+            if (d.getTime() > todayDate.getTime()) continue;
+            const key = fmtKey(d);
+            const e = data[key];
+            if (e && e.checked) count++;
+          }
+          monthNum.textContent = count;
+        }
+
+        document.getElementById("prevMonth").addEventListener("click", () => {
+          viewMonth--;
+          if (viewMonth < 0) {
+            viewMonth = 11;
+            viewYear--;
+          }
+          renderCalendar();
+          renderStats();
+        });
+        document.getElementById("nextMonth").addEventListener("click", () => {
+          viewMonth++;
+          if (viewMonth > 11) {
+            viewMonth = 0;
+            viewYear++;
+          }
+          renderCalendar();
+          renderStats();
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+          if (confirm("Reset all tracked days? This cannot be undone.")) {
+            data = {};
+            save();
+            renderTodayCard();
+            renderCalendar();
+            renderStats();
+          }
+        });
+
+        renderTodayCard();
+        renderCalendar();
+        renderStats();
+      })();
+    </script>
+  </body>
+</html>
